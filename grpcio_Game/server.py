@@ -14,21 +14,11 @@
 """The Python implementation of the gRPC route guide server."""
 
 from concurrent import futures
-from itertools import count
 import logging
 import grpc
 import game_pb2
 import game_pb2_grpc
 from joken import Jokenpo
-import time
-
-
-def wait_until(somepredicate, timeout, period=0.1):
-  mustend = time.time() + timeout
-  while time.time() < mustend:
-    if somepredicate: return True
-    time.sleep(period)
-  return False
 
 
 class GameServicer(game_pb2_grpc.AnalizerServicer):
@@ -44,7 +34,11 @@ class GameServicer(game_pb2_grpc.AnalizerServicer):
         return game_pb2.void()
 
     def getWinner(self, request, context):
-        wait_until(self.count%2==0, 5)
+
+        while self.count%2!=0:
+            self.wait = True
+
+        self.wait = False
         win = Jokenpo(self.requests[self.count-2], self.requests[self.count-1])
         return game_pb2.Hand(value=win)
         
