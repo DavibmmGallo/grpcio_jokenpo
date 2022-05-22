@@ -1,0 +1,22 @@
+version: "3.5"
+
+services:
+  redis-server:
+    image: 'redis'
+    ports:
+     - '6379:6379'
+    networks:
+      - jokenpo-net
+  jokenpo-server:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    ports:
+      - '5000:5000'
+    networks:
+      - jokenpo-net
+    entrypoint: ['python', 'server.py', 'serve']
+networks:
+  jokenpo-net:
+    name: jokenpo-net
+    driver: bridge

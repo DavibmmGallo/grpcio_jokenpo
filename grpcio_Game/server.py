@@ -16,9 +16,13 @@
 from concurrent import futures
 import logging
 import grpc
-import game_pb2
-import game_pb2_grpc
-from joken import Jokenpo
+from resources import (
+    game_pb2,
+    game_pb2_grpc
+)
+from resources.joken import Jokenpo
+from redis import Redis
+import json
 
 
 class GameServicer(game_pb2_grpc.AnalizerServicer):
@@ -27,6 +31,7 @@ class GameServicer(game_pb2_grpc.AnalizerServicer):
     def __init__(self):
         self.count = 0
         self.requests = []
+        self.r = Redis(host='redis-server',port=6379,db=0)
 
     def SendHand(self, request, context):
         self.requests.append(request.value)
@@ -34,12 +39,17 @@ class GameServicer(game_pb2_grpc.AnalizerServicer):
         return game_pb2.void()
 
     def getWinner(self, request, context):
-
         while self.count%2!=0:
             self.wait = True
-
         self.wait = False
         win = Jokenpo(self.requests[self.count-2], self.requests[self.count-1])
+        self.r.set('Round',json.dumps(
+            {
+                'player1': self.requests[self.count-2],
+                'player2': self.requests[self.count-1]
+            })
+        )
+        print('Round ' + str(json.loads(self.r.get('Round'))))
         return game_pb2.Hand(value=win)
         
 
